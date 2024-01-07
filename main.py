@@ -1,7 +1,6 @@
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from typing import Union, Optional
-import time
 import re
 
 
@@ -46,6 +45,17 @@ class TheatreParse:
                     "button",
                     name="Загрузить еще").is_visible()
 
+            for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
+                card_head = " ".join(loc.locator(".card-head").text_content().strip().split("\n"))
+                tickets_price = " ".join(loc.locator(".card-footer").get_by_role("button").text_content().strip().split("\n"))
+                tickets_count = " ".join(loc.locator(".card-footer").locator(".card__tickets").text_content().strip().split("\n"))
+                cover_date = " ".join(loc.locator(".card-cover__date").text_content().strip().split("\n"))
+
+                print(re.sub("\s{2,}", " ", card_head))
+                print(re.sub("\s{2,}", " ", tickets_price))
+                print(re.sub("\s{2,}", " ", tickets_count))
+                print(re.sub("\s{2,}", " ", cover_date))
+                print()
             self.page.wait_for_timeout(7_000)
 
 
