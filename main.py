@@ -31,12 +31,10 @@ class TheatreParse:
             self.page.get_by_role("link", name="Купить билет").click()
             self.page.wait_for_timeout(5_000)
             self.page.mouse.wheel(0, 150_000)
-            self.page.screenshot(path="step1.png")
 
             is_exists_btn_load_more = self.page.frame_locator("#RadarioIframe2").get_by_role(
                 "button",
                 name="Загрузить еще").is_visible()
-            screenshot_counter = 2
 
             task_iframe_id = self.__get_iframe_id(self.page.content())
 
@@ -44,8 +42,6 @@ class TheatreParse:
                 self.page.frame_locator(f"#{task_iframe_id}").get_by_role("button", name="Загрузить еще").click()
                 self.page.wait_for_timeout(5_000)
                 self.page.mouse.wheel(0, 150_000)
-                self.page.screenshot(path=f"step{screenshot_counter}.png")
-                screenshot_counter += 1
                 is_exists_btn_load_more = self.page.frame_locator("#RadarioIframe2").get_by_role(
                     "button",
                     name="Загрузить еще").is_visible()
