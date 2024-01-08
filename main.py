@@ -1,5 +1,7 @@
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
+from apscheduler.schedulers.blocking import BlockingScheduler
+
 from typing import Union, Optional
 import re
 
@@ -19,6 +21,11 @@ class TheatreParse:
                 if "https://radario.ru/customer/afisha" in iframe.get('src'):
                     return iframe.get('id')
         return None
+
+    def __format_text(self, text: str) -> str:
+        return re.sub("\s{2,}", " ",
+                      " ".join(text.strip().split("\n"))
+                      )
 
     def parse(self):
         with sync_playwright() as playwright:
@@ -46,18 +53,32 @@ class TheatreParse:
                     name="Загрузить еще").is_visible()
 
             for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
-                card_head = " ".join(loc.locator(".card-head").text_content().strip().split("\n"))
-                tickets_price = " ".join(loc.locator(".card-footer").get_by_role("button").text_content().strip().split("\n"))
-                tickets_count = " ".join(loc.locator(".card-footer").locator(".card__tickets").text_content().strip().split("\n"))
-                cover_date = " ".join(loc.locator(".card-cover__date").text_content().strip().split("\n"))
+                card_head = self.__format_text(
+                    loc.locator(".card-head").text_content()
+                )
+                tickets_price = self.__format_text(
+                    loc.locator(".card-footer").get_by_role("button").text_content()
+                )
+                tickets_count = self.__format_text(
+                    loc.locator(".card-footer").locator(".card__tickets").text_content()
+                )
+                cover_date = self.__format_text(
+                    loc.locator(".card-cover__date").text_content()
+                )
 
-                print(re.sub("\s{2,}", " ", card_head))
-                print(re.sub("\s{2,}", " ", tickets_price))
-                print(re.sub("\s{2,}", " ", tickets_count))
-                print(re.sub("\s{2,}", " ", cover_date))
+                print(card_head)
+                print(tickets_price)
+                print(tickets_count)
+                print(cover_date)
                 print()
             self.page.wait_for_timeout(7_000)
 
 
 if __name__ == '__main__':
-    TheatreParse().parse()
+    def some_job():
+        TheatreParse().parse()
+
+
+    scheduler = BlockingScheduler()
+    scheduler.add_job(some_job, 'interval', hours=1)
+    scheduler.start()
