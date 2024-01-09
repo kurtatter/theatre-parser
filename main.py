@@ -5,6 +5,13 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from typing import Union, Optional
 import re
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from models import Ticket
+
+engine = create_engine("sqlite:///data.db")
+Session = sessionmaker(engine)
+
 
 class TheatreParse:
     def __init__(self):
@@ -51,26 +58,36 @@ class TheatreParse:
                 is_exists_btn_load_more = self.page.frame_locator("#RadarioIframe2").get_by_role(
                     "button",
                     name="Загрузить еще").is_visible()
+            with Session(bind=engine) as session:
 
-            for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
-                card_head = self.__format_text(
-                    loc.locator(".card-head").text_content()
-                )
-                tickets_price = self.__format_text(
-                    loc.locator(".card-footer").get_by_role("button").text_content()
-                )
-                tickets_count = self.__format_text(
-                    loc.locator(".card-footer").locator(".card__tickets").text_content()
-                )
-                cover_date = self.__format_text(
-                    loc.locator(".card-cover__date").text_content()
-                )
+                for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
+                    card_head = self.__format_text(
+                        loc.locator(".card-head").text_content()
+                    )
+                    tickets_price = self.__format_text(
+                        loc.locator(".card-footer").get_by_role("button").text_content()
+                    )
+                    tickets_count = self.__format_text(
+                        loc.locator(".card-footer").locator(".card__tickets").text_content()
+                    )
+                    cover_date = self.__format_text(
+                        loc.locator(".card-cover__date").text_content()
+                    )
 
-                print(card_head)
-                print(tickets_price)
-                print(tickets_count)
-                print(cover_date)
-                print()
+                    print(card_head)
+                    print(tickets_price)
+                    print(tickets_count)
+                    print(cover_date)
+                    print()
+                    session.add(
+                        Ticket(
+                            card_head,
+                            tickets_price,
+                            tickets_count,
+                            cover_date
+                        )
+                    )
+                session.commit()
             self.page.wait_for_timeout(7_000)
 
 
