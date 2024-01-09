@@ -75,10 +75,11 @@ class TheatreParse:
 
 
 if __name__ == '__main__':
-    def some_job():
-        TheatreParse().parse()
-
-
-    scheduler = BlockingScheduler()
-    scheduler.add_job(some_job, 'interval', hours=1)
-    scheduler.start()
+    TheatreParse().parse()
+    # def some_job():
+    #     TheatreParse().parse()
+    #
+    #
+    # scheduler = BlockingScheduler()
+    # scheduler.add_job(some_job, 'interval', hours=1)
+    # scheduler.start()
