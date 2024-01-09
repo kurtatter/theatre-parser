@@ -43,7 +43,7 @@ class TheatreParse:
                         ticket.get("price"),
                         ticket.get("count"),
                         ticket.get("date"),
-                        True
+                        ticket.get("price_is_active")
                     )
                 )
 
