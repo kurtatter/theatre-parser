@@ -24,6 +24,7 @@ class Ticket(Base):
     count = Column(String(128))
     date_time = Column(DateTime, name="dateTime")
     is_active = Column(Boolean, name="isActive")
+    revision = Column(Integer)
 
     def __str__(self):
         return self.title
@@ -61,9 +62,10 @@ class Ticket(Base):
             int(date_time_values[2].split(':')[1])
         )
 
-    def __init__(self, title: str, price: str, count: str, date_time: str, is_active: bool) -> None:
+    def __init__(self, title: str, price: str, count: str, date_time: str, is_active: bool, revision: int) -> None:
         self.title = title
         self.price = price
         self.count = count
         self.date_time = self.__parse_date_time(date_time)
         self.is_active = is_active
+        self.revision = revision

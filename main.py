@@ -7,6 +7,7 @@ import re
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import select
 from models import Ticket
 
 engine = create_engine("sqlite:///data.db")
@@ -18,6 +19,22 @@ class TheatreParse:
         self.URL = 'https://teatr15.ru/'
         self.page = None
         self.context = None
+        self.last_revision_number = self.__get_revision_number()
+
+    def __get_revision_number(self):
+        with Session(bind=engine) as session:
+            all_tickets = session.execute(
+                select(Ticket.revision)
+            ).all()
+            #FIXME: нужно улучшить
+            if len(all_tickets) == 0:
+                return 1
+            else:
+                last_revision = all_tickets[-1][0]
+                if last_revision is None:
+                    return 1
+                else:
+                    return last_revision + 1
 
     def __get_iframe_id(self, html: str) -> Optional[str]:
         soup = BeautifulSoup(html, 'lxml')
@@ -43,7 +60,8 @@ class TheatreParse:
                         ticket.get("price"),
                         ticket.get("count"),
                         ticket.get("date"),
-                        ticket.get("price_is_active")
+                        ticket.get("price_is_active"),
+                        ticket.get("revision")
                     )
                 )
 
@@ -99,10 +117,12 @@ class TheatreParse:
                     "price": tickets_price,
                     "price_is_active": ticket_price_disabled,
                     "count": tickets_count,
-                    "date": cover_date
+                    "date": cover_date,
+                    "revision": self.last_revision_number
                 })
 
             self.__save_tickets(tickets)
+            self.last_revision_number += 1
             print(tickets)
 
             self.page.wait_for_timeout(7_000)
