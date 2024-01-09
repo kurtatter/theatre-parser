@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 
 from datetime import datetime
 
@@ -23,6 +23,7 @@ class Ticket(Base):
     price = Column(String(128))
     count = Column(String(128))
     date_time = Column(DateTime, name="dateTime")
+    is_active = Column(Boolean, name="isActive")
 
     def __str__(self):
         return self.title
@@ -60,8 +61,9 @@ class Ticket(Base):
             int(date_time_values[2].split(':')[1])
         )
 
-    def __init__(self, title: str, price: str, count: str, date_time: str) -> None:
+    def __init__(self, title: str, price: str, count: str, date_time: str, is_active: bool) -> None:
         self.title = title
         self.price = price
         self.count = count
         self.date_time = self.__parse_date_time(date_time)
+        self.is_active = is_active

@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from typing import Union, Optional
+from typing import Optional, List, Dict
 import re
 
 from sqlalchemy import create_engine
@@ -34,6 +34,21 @@ class TheatreParse:
                       " ".join(text.strip().split("\n"))
                       )
 
+    def __save_tickets(self, tickets: List[Dict]):
+        with Session(bind=engine) as session:
+            for ticket in tickets:
+                session.add(
+                    Ticket(
+                        ticket.get("title"),
+                        ticket.get("price"),
+                        ticket.get("count"),
+                        ticket.get("date"),
+                        True
+                    )
+                )
+
+            session.commit()
+
     def parse(self):
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=False)
@@ -58,36 +73,38 @@ class TheatreParse:
                 is_exists_btn_load_more = self.page.frame_locator("#RadarioIframe2").get_by_role(
                     "button",
                     name="Загрузить еще").is_visible()
-            with Session(bind=engine) as session:
 
-                for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
-                    card_head = self.__format_text(
-                        loc.locator(".card-head").text_content()
-                    )
-                    tickets_price = self.__format_text(
-                        loc.locator(".card-footer").get_by_role("button").text_content()
-                    )
-                    tickets_count = self.__format_text(
-                        loc.locator(".card-footer").locator(".card__tickets").text_content()
-                    )
-                    cover_date = self.__format_text(
-                        loc.locator(".card-cover__date").text_content()
-                    )
+            tickets = list()
 
-                    print(card_head)
-                    print(tickets_price)
-                    print(tickets_count)
-                    print(cover_date)
-                    print()
-                    session.add(
-                        Ticket(
-                            card_head,
-                            tickets_price,
-                            tickets_count,
-                            cover_date
-                        )
-                    )
-                session.commit()
+            for loc in self.page.frame_locator("#RadarioIframe2").locator(".card-wrapper").all():
+                card_head = self.__format_text(
+                    loc.locator(".card-head").text_content()
+                )
+                tickets_price = self.__format_text(
+                    loc.locator(".card-footer").get_by_role("button").text_content()
+                )
+
+                ticket_price_disabled = not bool(loc.locator(".card-footer").
+                                                 get_by_role("button").get_attribute("disabled"))
+
+                tickets_count = self.__format_text(
+                    loc.locator(".card-footer").locator(".card__tickets").text_content()
+                )
+                cover_date = self.__format_text(
+                    loc.locator(".card-cover__date").text_content()
+                )
+
+                tickets.append({
+                    "title": card_head,
+                    "price": tickets_price,
+                    "price_is_active": ticket_price_disabled,
+                    "count": tickets_count,
+                    "date": cover_date
+                })
+
+            self.__save_tickets(tickets)
+            print(tickets)
+
             self.page.wait_for_timeout(7_000)
 
 
